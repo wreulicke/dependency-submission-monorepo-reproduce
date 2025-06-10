@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Submit dependency using trivy
-        uses: aquasecurity/trivy-action@v0.4.0
+        uses: aquasecurity/trivy-action@0.31.0
         with:
           scan-type: 'fs'
           scan-ref: 'application-a'
@@ -33,7 +33,7 @@ jobs:
           curl -H 'Accept: application/vnd.github+json' -H "Authorization: token ${{ github.token }}" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/dependency-graph/snapshots" -d @"${{ github.workspace }}/trivy-report.patched.json"
       - name: Upload Trivy report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: |
