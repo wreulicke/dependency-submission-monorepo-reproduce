@@ -1,0 +1,41 @@
+name: Application B CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'application-b/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'application-b/**'
+
+jobs:
+  submit-dependency:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Submit dependency using trivy
+        uses: aquasecurity/trivy-action@v0.4.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'application-b'
+          format: 'github'
+          output: 'trivy-report.json'
+      - name: Submit dependency to GitHub
+        run: |
+          cat "${{ github.workspace }}/trivy-report.json" \
+            | jq '.manifests |= (. | with_entries(.key |= "application-b/" + . | .value.file.source_location |= "application-b/" + .))' \
+            > "${{ github.workspace }}/trivy-report.patched.json"
+          curl -H 'Accept: application/vnd.github+json' -H "Authorization: token ${{ github.token }}" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/dependency-graph/snapshots" -d @"${{ github.workspace }}/trivy-report.patched.json"
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: |
+            trivy-report.json
+            trivy-report.patched.json
